@@ -189,10 +189,3 @@ jupyter notebook notebooks/
 
 ---
 
-## Next Steps (Phase 2)
-
-Phase 2 will add an interactable user interface on top of this trained pipeline:
-- **Interactive Web App:** A clean Streamlit or FastAPI dashboard where users can input claim details and get instant predictions.
-- **Risk Score Gauge:** Shows low, medium, or high risk probabilities with the optimized 0.38 threshold.
-- **Reason Explanation:** Visual display showing which features contributed most to flagging a claim.
-- **Batch Processing:** Upload a CSV of multiple claims to download a prioritized investigation queue.
