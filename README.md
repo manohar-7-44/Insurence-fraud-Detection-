@@ -1,303 +1,198 @@
-# 🛡️ Enterprise Insurance Claim Fraud Detection Engine
+# Insurance Claim Fraud Detection
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Machine Learning](https://img.shields.io/badge/Scikit--Learn-Pipeline-orange.svg)](https://scikit-learn.org/)
-[![XGBoost](https://img.shields.io/badge/XGBoost-Ensemble-red.svg)](https://xgboost.readthedocs.io/)
-[![Explainability](https://img.shields.io/badge/XAI-SHAP%20Framework-blueviolet.svg)](https://shap.readthedocs.io/)
-
-> **A Major Project Machine Learning System for Automated Risk Scoring, Cost-Sensitive Decision Calibration, and Explainable Forensic Auditing of Property & Casualty (P&C) Automobile Insurance Claims.**
+An end-to-end machine learning project designed to detect fraudulent automobile insurance claims. This project focuses on building a leak-free data preprocessing pipeline, engineering domain-specific insurance risk features, handling class imbalance, and benchmarking multiple classification models to find the most cost-effective solution.
 
 ---
 
-## 📑 Table of Contents
-1. [Executive Summary & Problem Statement](#-1-executive-summary--problem-statement)
-2. [End-to-End System Architecture](#-2-end-to-end-system-architecture)
-3. [Methodological Audit: Baseline vs. Major Project](#-3-methodological-audit-baseline-vs-major-project)
-4. [Domain-Driven Feature Engineering](#-4-domain-driven-feature-engineering)
-5. [Multi-Model Benchmark & Performance Comparison](#-5-multi-model-benchmark--performance-comparison)
-6. [Cost-Sensitive Threshold Optimization](#-6-cost-sensitive-threshold-optimization)
-7. [Explainable AI (XAI) & Interpretability](#-7-explainable-ai-xai--interpretability)
-8. [Repository Structure](#-8-repository-structure)
-9. [Quickstart & Reproducibility Guide](#-9-quickstart--reproducibility-guide)
-10. [Automated Testing & CI/CD Validation](#-10-automated-testing--cicd-validation)
-11. [Roadmap: Phase 2 Interactive Web Application](#-11-roadmap-phase-2-interactive-web-application)
-12. [License & Acknowledgments](#-12-license--acknowledgments)
+## Overview
+
+In the insurance industry, fraudulent claims result in significant financial losses and increase premium costs for honest policyholders. Detecting fraud automatically using machine learning helps claims adjusters flag suspicious files early for closer investigation.
+
+This repository represents **Phase 1** of this project: building a reliable, reproducible, and leak-free machine learning pipeline from raw data to model evaluation. **Phase 2** will introduce an interactive web application for real-time claim scoring.
 
 ---
 
-## 📌 1. Executive Summary & Problem Statement
+## What Was Improved Over the Initial Version
 
-Insurance claim fraud is an acute multi-billion dollar vulnerability in the Property and Casualty (P&C) insurance ecosystem. According to the Coalition Against Insurance Fraud, fraudulent claims siphon **over $80 billion annually in the US alone**, inflating premiums for honest consumers by an average of \$400 to \$700 per household each year.
+The original version of this project used a single Jupyter notebook with basic preprocessing. To turn this into a solid, industry-standard project, several technical improvements were made:
 
-### The Problem
-Traditional claim handling relies on manual adjusters and rigid rule-based heuristics that either:
-1. **Miss sophisticated fraud syndicates** (False Negatives), leading to catastrophic claim payouts.
-2. **Flag honest claimants for protracted investigations** (False Positives), escalating administrative costs and eroding customer trust.
+1. **Fixed Missing Value Handling:**
+   - In `insurance_claims.csv`, missing entries in columns like `collision_type`, `property_damage`, and `police_report_available` were originally stored as `'?'`.
+   - These are now explicitly parsed as null values (`np.nan`) and handled using median and constant imputation inside the pipeline instead of being treated as normal categories.
 
-### The Solution
-This project elevates fraud detection from basic exploratory notebooks into an **industrial-grade, leak-proof Machine Learning engine**. It integrates:
-- **Domain-Specific Risk Ratios:** Quantifying suspicious timing, claim-to-premium discrepancies, and out-of-state crashes.
-- **Leak-Proof Preprocessing:** Scikit-learn `Pipeline` and `ColumnTransformer` architecture ensuring zero data leakage between training and inference.
-- **Cost-Sensitive Threshold Calibration:** Directly minimizing business financial loss ($50,000 FN payout vs. $500 FP investigation fee).
-- **Explainable AI (XAI):** Tree-based SHAP (SHapley Additive exPlanations) enabling forensic adjusters to inspect individual claim decisions.
+2. **Eliminated Data Leakage:**
+   - Previously, one-hot encoding was applied to the entire dataset before splitting into train and test sets.
+   - All transformations (encoding, scaling, imputation) are now wrapped inside a `ColumnTransformer` and scikit-learn `Pipeline`, ensuring preprocessing parameters are learned strictly from the training split.
+
+3. **Domain Feature Engineering:**
+   - Rather than dropping date and location columns, they are now used to extract meaningful risk signals (such as time from policy purchase to incident, claim-to-premium ratios, and out-of-state accident flags).
+
+4. **Proper Feature Scaling:**
+   - Continuous features (such as `total_claim_amount` and `policy_annual_premium`) had widely different scales. Using `RobustScaler` fixed distance distortion for models sensitive to scale.
+
+5. **Imbalance-Aware Evaluation:**
+   - The dataset is imbalanced (~24.7% fraud). Relying solely on accuracy is deceptive. Models are evaluated using 5-fold Stratified Cross-Validation, tracking Recall, Precision, F1-Score, and PR-AUC.
+
+6. **Modular Codebase:**
+   - The project is now structured into clean Python scripts under `src/`, automated tests under `tests/`, and clean standalone notebooks under `notebooks/`.
 
 ---
 
-## 🏛️ 2. End-to-End System Architecture
+## Dataset Summary
 
-```mermaid
-flowchart TD
-    subgraph INGEST["1. Data Ingestion & Sanitization"]
-        RAW[("insurance_claims.csv\n1,000 Records, 40 Features")]
-        PARSE["data_loader.py\n• Parse '?' -> NaN\n• Strip column whitespace\n• Drop technical artifact '_c39'"]
-        SPLIT["Stratified Train/Test Split (80/20)\n• Train: 800 claims (198 Fraud)\n• Test: 200 claims (49 Fraud)"]
-        RAW --> PARSE --> SPLIT
-    end
+- **Source:** Property & casualty automobile insurance claim records (`insurance_claims.csv`)
+- **Total Records:** 1,000 claims
+- **Target Variable:** `fraud_reported`
+  - `0` (No Fraud): 753 records (75.3%)
+  - `1` (Fraud): 247 records (24.7%)
+- **Split:** 80% Training (800 records), 20% Held-Out Test (200 records), stratified by class label.
 
-    subgraph FEAT["2. Domain Feature Engineering"]
-        ENG["InsuranceFeatureEngineer (TransformerMixin)\n• Days to Incident & Flash Claim (<90 days)\n• Claim-to-Premium Ratio\n• Component Ratios (Vehicle, Injury, Property)\n• Out-of-State Incident Discrepancy\n• Solo Severe Crash Indicator"]
-        SPLIT --> ENG
-    end
+---
 
-    subgraph PIPE["3. Leak-Proof Preprocessing Pipeline"]
-        NUM_TRANS["Numerical Pipeline\n• SimpleImputer(strategy='median')\n• RobustScaler (outlier resistant)"]
-        CAT_TRANS["Categorical Pipeline\n• SimpleImputer(fill_value='MISSING')\n• OneHotEncoder(handle_unknown='ignore')"]
-        COL_TRANS["ColumnTransformer (Combines Num + Cat)"]
-        ENG --> NUM_TRANS --> COL_TRANS
-        ENG --> CAT_TRANS --> COL_TRANS
-    end
+## Feature Engineering
 
-    subgraph MODELS["4. Multi-Model Benchmark & Tuning"]
-        CV["5-Fold Stratified Cross-Validation"]
-        M1["Cost-Weighted Logistic Regression"]
-        M2["Balanced Random Forest"]
-        M3["Scale-Weighted XGBoost (Champion)"]
-        COL_TRANS --> CV
-        CV --> M1
-        CV --> M2
-        CV --> M3
-    end
+Insurance fraud often shows distinct patterns around timing and financial numbers. The custom `InsuranceFeatureEngineer` transformer (`src/features.py`) calculates:
 
-    subgraph COST["5. Decision Threshold Calibration"]
-        LOSS["Cost-Loss Objective Function:\nLoss(θ) = $50,000 × FN(θ) + $500 × FP(θ)"]
-        OPT_TH["Optimal Cutoff: θ* = 0.38\n(Saves $174,500 over default θ=0.50)"]
-        M3 --> LOSS --> OPT_TH
-    end
+- `days_to_incident`: Number of days between policy binding and the accident date.
+- `is_flash_claim`: Binary flag for claims filed within the first 90 days of taking out a policy.
+- `claim_to_premium_ratio`: Total claim amount divided by annual premium paid.
+- `vehicle_claim_ratio`: Vehicle damage claim amount relative to total claim.
+- `injury_claim_ratio`: Injury claim amount relative to total claim.
+- `is_out_of_state_incident`: Flags claims where the incident occurred in a different state from where the policy was registered.
+- `is_night_incident`: Flags accidents occurring between 11 PM and 5 AM.
+- `is_solo_severe_crash`: Flags single-vehicle accidents claiming major damage or total vehicle loss.
 
-    subgraph OUTPUT["6. Production Artifacts & Serving"]
-        SERIAL["best_fraud_pipeline.joblib"]
-        META["model_metadata.json"]
-        XAI["SHAP Waterfall Explanations"]
-        OPT_TH --> SERIAL
-        OPT_TH --> META
-        OPT_TH --> XAI
-    end
+---
+
+## Model Benchmark & Results
+
+All models were evaluated using 5-Fold Stratified Cross-Validation on the training set and checked against the 20% held-out test split.
+
+| Model | Feature Set | Scaler | Accuracy | Precision | Recall | F1-Score | ROC-AUC |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| K-Nearest Neighbors (KNN) | Baseline | None | 0.69 | 0.29 | 0.22 | 0.25 | 0.62 |
+| Support Vector Machine (SVM) | Baseline | None | 0.75 | 0.00 | 0.00 | 0.00 | 0.50 |
+| Multilayer Perceptron (MLP) | Baseline | None | 0.75 | 0.00 | 0.00 | 0.00 | 0.50 |
+| Decision Tree | Baseline | None | 0.81 | 0.60 | 0.60 | 0.60 | 0.77 |
+| Random Forest | Baseline | None | 0.77 | 0.48 | 0.46 | 0.47 | 0.76 |
+| Balanced Random Forest | Baseline | None | 0.77 | 0.56 | 0.54 | 0.55 | 0.78 |
+| Naive Bayes (Bernoulli) | Baseline | None | 0.79 | 0.59 | 0.57 | 0.58 | 0.77 |
+| Linear Discriminant Analysis | Baseline | None | 0.83 | 0.66 | 0.62 | 0.64 | 0.82 |
+| Original XGBoost | Baseline | None | 0.83 | 0.66 | 0.62 | 0.64 | 0.82 |
+| **Cost-Weighted Logistic Regression** | **Engineered** | **RobustScaler** | 0.82 | 0.65 | 0.78 | 0.71 | 0.84 |
+| **Balanced Random Forest** | **Engineered** | **RobustScaler** | 0.85 | 0.68 | 0.76 | 0.72 | 0.86 |
+| **Engineered XGBoost (Best Model)** | **Engineered** | **RobustScaler** | **0.865** | **0.72** | **0.81** | **0.76** | **0.885** |
+
+### Key Takeaways:
+- Baseline SVM and MLP completely failed (0.00 recall) in the original version because unscaled claim amounts ($70,000+) dominated distance calculations.
+- Adding domain features and proper scaling boosted XGBoost from an F1 of 0.64 to **0.76**, and increased fraud recall from 62% to **81%**.
+
+---
+
+## Decision Threshold Optimization
+
+In standard classification, a claim is flagged as fraud if the model's predicted probability is 0.50 or higher. In real-world insurance, the business costs are unbalanced:
+
+- **False Negative (Missed Fraud):** Paying out a fraudulent claim costs the company roughly $50,000 on average.
+- **False Positive (Flagged Honest Customer):** Manually investigating an honest claim costs around $500 in adjuster time.
+
+Because missing a fraudulent claim is far more expensive than investigating an honest customer, the decision threshold was tuned across test predictions:
+
+```text
+Threshold (cutoff)    False Negatives    False Positives    Expected Financial Loss
+-----------------------------------------------------------------------------------
+0.50 (Default)               9                 18                 $459,000
+0.38 (Optimized)             5                 34                 $267,000
+-----------------------------------------------------------------------------------
+Net Savings:                                                      +$192,000
 ```
 
----
-
-## 🔬 3. Methodological Audit: Baseline vs. Major Project
-
-| Dimension | Initial Baseline Implementation | Major Project Implementation | Business & Statistical Impact |
-| :--- | :--- | :--- | :--- |
-| **Missing Values** | Ignored; strings with `'?'` were treated as normal categories | Explicitly converted to `NaN`, followed by median / missing-category imputation | Eliminates phantom categories in `collision_type`, `property_damage`, `police_report` |
-| **Feature Leakage** | `pd.get_dummies` run on full dataset prior to train/test split | Scikit-learn `Pipeline` + `OneHotEncoder(handle_unknown='ignore')` | Guarantees zero test-set leakage; enables real-time single-row inference |
-| **Temporal Data** | Dropped `policy_bind_date` & `incident_date` entirely | Engineered `days_to_incident` and `is_flash_claim` flags | Recovers critical insurance fraud signal (claims filed shortly after binding) |
-| **Feature Scaling** | No scaling applied (raw claim amounts ~$70,000 fed to models) | `RobustScaler` applied to all continuous features | Fixes distance distortion in KNN/SVM and gradient explosion in Neural Networks |
-| **Evaluation Strategy** | Single unstratified 15% split (only ~37 frauds in test) | 5-Fold Repeated Stratified CV + 20% Held-out Stratified Test Set | Drastically lowers evaluation variance; prevents metric distortion |
-| **Evaluation Focus** | Raw Accuracy & basic ROC-AUC | Precision-Recall AUC (PR-AUC), Fraud Recall, F1-Score | Aligns with 24.7% class imbalance where high accuracy can be achieved trivially |
-| **Threshold Decision** | Fixed default threshold at $0.50$ | Financial Cost-Loss curve optimization ($\theta^* = 0.38$) | Minimizes total monetary losses from costly False Negatives |
-| **Explainability** | Raw Gini feature importance (biased toward high cardinality) | SHAP (SHapley Additive exPlanations) Game-Theoretic Framework | Provides auditable, regulatory-compliant explanations for adjusters |
-| **Code Structure** | Single flat monolithic `.ipynb` notebook | Modular Python architecture (`src/`, `tests/`, `models/`, `reports/`) | Production-ready, maintainable, CI/CD-tested codebase |
+By lowering the decision threshold to **0.38**, the model catches 4 additional fraudulent claims, saving an estimated **$192,000** on the test set.
 
 ---
 
-## ⚙️ 4. Domain-Driven Feature Engineering
-
-Our custom transformer [`src/features.py`](src/features.py) calculates specialized forensic signals based on insurance actuarial science:
-
-### 1. Flash Claim Dynamics (Temporal Hazard)
-Fraudulent claims frequently manifest shortly after taking out an insurance policy:
-$$\text{days\_to\_incident} = \text{incident\_date} - \text{policy\_bind\_date}$$
-$$\text{is\_flash\_claim} = \mathbb{I}(\text{days\_to\_incident} \le 90)$$
-
-### 2. Financial Discrepancy & Claims Component Ratios
-Fraudulent claimants often inflate vehicle claims while keeping personal injury claims low to avoid medical audits:
-$$\text{claim\_to\_premium\_ratio} = \frac{\text{total\_claim\_amount}}{\text{policy\_annual\_premium} + 1.0}$$
-$$\text{vehicle\_claim\_ratio} = \frac{\text{vehicle\_claim}}{\text{total\_claim\_amount} + 1.0}$$
-$$\text{injury\_claim\_ratio} = \frac{\text{injury\_claim}}{\text{total\_claim\_amount} + 1.0}$$
-
-### 3. Geographic & Operational Risk Signals
-- **`is_out_of_state_incident`**: Flags claims occurring outside the policyholder's home state ($\text{incident\_state} \neq \text{policy\_state}$).
-- **`is_night_incident`**: Flags accidents between 11:00 PM and 5:00 AM (hours with peak staged-accident occurrence).
-- **`is_solo_severe_crash`**: Flags incidents involving total vehicle loss with only one vehicle involved and zero third-party witnesses.
-
----
-
-## 📊 5. Multi-Model Benchmark & Performance Comparison
-
-All models were evaluated using **5-Fold Stratified Cross-Validation** on the training partition and validated against the 20% held-out test split (200 claims, 49 frauds).
-
-| Model Architecture | Feature Engineering | Scaling Method | Accuracy | Precision (Fraud) | Recall (Fraud) | F1-Score | ROC-AUC | PR-AUC | Status |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| K-Nearest Neighbors (KNN) | Baseline | None | 0.690 | 0.290 | 0.220 | 0.250 | 0.620 | 0.340 | Baseline |
-| Support Vector Machine (RBF) | Baseline | None | 0.750 | 0.000 | 0.000 | 0.000 | 0.500 | 0.247 | Failed (Unscaled) |
-| Multilayer Perceptron (MLP) | Baseline | None | 0.750 | 0.000 | 0.000 | 0.000 | 0.500 | 0.247 | Failed (Unscaled) |
-| Decision Tree (CART) | Baseline | None | 0.810 | 0.600 | 0.600 | 0.600 | 0.770 | 0.510 | Baseline |
-| Standard Random Forest | Baseline | None | 0.770 | 0.480 | 0.460 | 0.470 | 0.760 | 0.530 | Baseline |
-| Balanced Random Forest | Baseline | None | 0.770 | 0.560 | 0.540 | 0.550 | 0.780 | 0.570 | Baseline |
-| Naive Bayes (Bernoulli) | Baseline | None | 0.790 | 0.590 | 0.570 | 0.580 | 0.770 | 0.560 | Baseline |
-| Linear Discriminant Analysis | Baseline | None | 0.830 | 0.660 | 0.620 | 0.640 | 0.820 | 0.610 | Baseline |
-| XGBoost (Original Notebook) | Baseline | None | 0.830 | 0.660 | 0.620 | 0.640 | 0.820 | 0.630 | Baseline |
-| **Cost-Weighted Logistic Regression** | **Engineered** | **RobustScaler** | 0.820 | 0.650 | 0.780 | 0.710 | 0.840 | 0.680 | Improved |
-| **Balanced Random Forest** | **Engineered** | **RobustScaler** | 0.850 | 0.680 | 0.760 | 0.720 | 0.860 | 0.720 | Ensemble |
-| **Engineered XGBoost (Champion)** | **Engineered** | **RobustScaler** | **0.865** | **0.720** | **0.810** | **0.762** | **0.885** | **0.750** | 🏆 **Champion** |
-
-### 🏆 Champion Model Performance Breakdown
-- **Fraud Recall: 81.0%** (Detects 40 out of 49 fraudulent claims in held-out test).
-- **Fraud Precision: 72.0%** (7 out of 10 flagged claims are confirmed fraud).
-- **ROC-AUC: 0.885** (Exceptional class separability).
-- **PR-AUC: 0.750** (3x higher than random guessing baseline of 0.247).
-
----
-
-## 💰 6. Cost-Sensitive Threshold Optimization
-
-Standard classification uses an arbitrary cutoff $\theta = 0.50$. In real-world insurance economics, misclassification costs are profoundly asymmetric:
-- **Cost of False Negative ($C_{\text{FN}}$):** Paying out an illegitimate claim $\approx \$50,000$.
-- **Cost of False Positive ($C_{\text{FP}}$):** Administrative friction and manual investigation $\approx \$500$.
-
-The operational cost function is defined as:
-$$\mathcal{L}(\theta) = C_{\text{FN}} \cdot \text{FN}(\theta) + C_{\text{FP}} \cdot \text{FP}(\theta) = \$50,000 \cdot \text{FN}(\theta) + \$500 \cdot \text{FP}(\theta)$$
-
-### Financial Savings Analysis
-```
-Decision Cutoff (θ)     False Negatives    False Positives    Expected Financial Loss
-───────────────────────────────────────────────────────────────────────────────────────
-θ = 0.50 (Default)             9                 18                 $459,000
-θ = 0.38 (Optimal θ*)          5                 34                 $267,000
-───────────────────────────────────────────────────────────────────────────────────────
-Net Financial Savings:                                              +$192,000 (41.8% Reduction)
-```
-By lowering the decision threshold to $\theta^* = 0.38$, the insurer catches 4 additional high-value fraudulent claims, reducing overall loss by **\$192,000 per 200 claims processed**.
-
----
-
-## 🧠 7. Explainable AI (XAI) & Interpretability
-
-To comply with insurance regulatory mandates (e.g., Fair Claims Settlement Practices), the system integrates **SHAP (SHapley Additive exPlanations)**.
-
-### Top Predictive Fraud Drivers
-1. **`incident_severity_Major Damage / Total Loss`**: Accounts filed with major damage without third-party vehicle verification have the highest positive SHAP attribution.
-2. **`is_flash_claim`**: Claims filed within the first 90 days after binding show elevated positive fraud influence.
-3. **`claim_to_premium_ratio`**: Extreme multiples of total claim relative to annual premium paid strongly push predictions toward fraud.
-4. **`insured_hobbies_chess / cross-fit`**: Specific behavioral cluster signals identified in claim history.
-5. **`is_out_of_state_incident`**: Crashes occurring away from the registered policy state.
-
----
-
-## 📂 8. Repository Structure
+## Project Structure
 
 ```text
 insurance_fraud_detection/
 ├── data/
 │   ├── raw/
-│   │   └── insurance_claims.csv                 # Raw immutable dataset
-│   └── processed/                               # Train / test partitions
+│   │   └── insurance_claims.csv       # Raw immutable claims dataset
+│   └── processed/                     # Train / test partitions
 ├── notebooks/
-│   ├── 01_eda_and_data_audit.ipynb              # Deep Exploratory Data Analysis
-│   ├── 02_feature_engineering_pipeline.ipynb    # Feature engineering & transformers
-│   ├── 03_model_benchmarking_and_tuning.ipynb   # 5-Fold Stratified CV & Cost curves
-│   └── 04_explainable_ai_shap.ipynb             # SHAP Global & Local explanations
+│   ├── 01_eda_and_data_audit.ipynb              # Exploratory data analysis & quality audit
+│   ├── 02_feature_engineering_pipeline.ipynb    # Feature transformations & pipelines
+│   ├── 03_model_benchmarking_and_tuning.ipynb   # Model comparisons & threshold tuning
+│   └── 04_explainable_ai_shap.ipynb             # SHAP feature importance & case audits
 ├── src/
-│   ├── __init__.py                              # Python package identifier
-│   ├── config.py                                # Paths, feature lists & hyperparams
-│   ├── data_loader.py                           # '?' handling, validation & splits
-│   ├── features.py                              # Custom InsuranceFeatureEngineer
-│   ├── pipeline.py                              # Scikit-learn Pipeline assembler
-│   ├── evaluate.py                              # PR-AUC, ROC-AUC & Cost metrics
-│   └── train.py                                 # Training, tuning & serialization
+│   ├── __init__.py                    # Package marker
+│   ├── config.py                      # Column groupings, paths, and settings
+│   ├── data_loader.py                 # Data loading, cleaning, and stratified split
+│   ├── features.py                    # InsuranceFeatureEngineer transformer
+│   ├── pipeline.py                    # ColumnTransformer and scikit-learn pipeline
+│   ├── evaluate.py                    # Metrics, confusion matrix, and cost calculations
+│   └── train.py                       # Training engine and model serialization
 ├── models/
-│   ├── best_fraud_pipeline.joblib               # Champion pipeline production binary
-│   └── model_metadata.json                      # Performance metrics & threshold specs
+│   ├── best_fraud_pipeline.joblib     # Exported champion pipeline
+│   └── model_metadata.json            # Model parameters and evaluation numbers
 ├── reports/
-│   ├── figures/                                 # Visualizations & ROC/PR curves
-│   └── benchmark_comparison.csv                 # Detailed model benchmark table
+│   ├── figures/                       # Plots and charts
+│   └── benchmark_comparison.csv       # Benchmark results table
 ├── tests/
-│   └── test_pipeline.py                         # Automated Pytest suite
-├── requirements.txt                             # Pinned dependencies
-└── README.md                                    # Master project documentation
+│   └── test_pipeline.py               # Unit tests
+├── requirements.txt                   # Project dependencies
+└── README.md                          # Project documentation
 ```
 
 ---
 
-## 🚀 9. Quickstart & Reproducibility Guide
+## How to Run
 
-### Step 1: Clone Repository
+### 1. Clone the repository
 ```bash
 git clone https://github.com/manohar-7-44/Insurence-fraud-Detection-.git
 cd Insurence-fraud-Detection-
 ```
 
-### Step 2: Set Up Python Environment
+### 2. Set up the virtual environment
 ```bash
-# Create virtual environment
+# Create venv
 python -m venv venv
 
-# Activate virtual environment
-# Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# Linux / macOS:
+# Activate venv
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
 source venv/bin/activate
 
-# Install all dependencies
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Step 3: Run Master Training Engine
-Execute the end-to-end training, cross-validation, and model serialization:
+### 3. Run the training script
+Trains the pipeline, benchmarks models, optimizes the threshold, and saves the trained model:
 ```bash
 python -m src.train
 ```
 
-### Step 4: Explore Interactive Jupyter Notebooks
+### 4. Run tests
+Verifies that data loading, stratification, and pipeline predictions work without errors:
+```bash
+pytest tests/ -v
+```
+
+### 5. Run the notebooks
+To inspect the exploratory analysis and step-by-step pipeline:
 ```bash
 jupyter notebook notebooks/
 ```
 
 ---
 
-## 🧪 10. Automated Testing & CI/CD Validation
+## Next Steps (Phase 2)
 
-The codebase includes automated tests under [`tests/test_pipeline.py`](tests/test_pipeline.py) covering:
-- **Data Ingestion Integrity:** Verifies elimination of artifact `_c39` and complete removal of `'?'` placeholders.
-- **Stratification Consistency:** Confirms identical fraud distributions (~24.7%) between train and test partitions.
-- **Leakage Prevention:** Validates that feature transformations only learn from training splits.
-- **End-to-End Prediction:** Ensures fitted pipelines handle raw data inputs and output bounded probabilities $[0.0, 1.0]$.
-
-To execute tests:
-```bash
-pytest tests/ -v
-```
-
----
-
-## 🔮 11. Roadmap: Phase 2 Interactive Web Application
-
-With Phase 1 (Enterprise Machine Learning Pipeline) complete, **Phase 2** will introduce the interactive serving layer:
-- [ ] **Streamlit / FastAPI Dashboard:** User-friendly web interface for claims adjusters.
-- [ ] **Single-Claim Risk Scorer:** Real-time probability gauge with dynamic risk tiers ("Low", "Medium", "High").
-- [ ] **Interactive SHAP Waterfall Explainer:** Visual component showing adjusters the exact positive and negative factors driving each prediction.
-- [ ] **Batch CSV Claims Upload:** Bulk upload feature to score and rank hundreds of claims into an actionable fraud investigation queue.
-- [ ] **Docker Containerization:** `Dockerfile` and `docker-compose.yml` for cloud container deployment (AWS ECS, Google Cloud Run, Azure).
-
----
-
-## 📄 12. License & Acknowledgments
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
-### Dataset Reference
-The dataset used in this project is based on the benchmark Property & Casualty Insurance Claims Dataset widely utilized in fraud analytics research.
+Phase 2 will add an interactable user interface on top of this trained pipeline:
+- **Interactive Web App:** A clean Streamlit or FastAPI dashboard where users can input claim details and get instant predictions.
+- **Risk Score Gauge:** Shows low, medium, or high risk probabilities with the optimized 0.38 threshold.
+- **Reason Explanation:** Visual display showing which features contributed most to flagging a claim.
+- **Batch Processing:** Upload a CSV of multiple claims to download a prioritized investigation queue.
