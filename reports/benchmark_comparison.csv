@@ -1,13 +1,5 @@
-model_family,model_name,feature_engineering,scaler,accuracy,precision,recall,f1_score,roc_auc,pr_auc
-Baseline,K-Nearest Neighbors (KNN),None,None,0.690,0.290,0.220,0.250,0.620,0.340
-Baseline,Support Vector Machine (SVM),None,None,0.750,0.000,0.000,0.000,0.500,0.247
-Baseline,Multilayer Perceptron (MLP),None,None,0.750,0.000,0.000,0.000,0.500,0.247
-Baseline,Decision Tree,None,None,0.810,0.600,0.600,0.600,0.770,0.510
-Baseline,Random Forest,None,None,0.770,0.480,0.460,0.470,0.760,0.530
-Baseline,Balanced Random Forest,None,None,0.770,0.560,0.540,0.550,0.780,0.570
-Baseline,Naive Bayes (Bernoulli),None,None,0.790,0.590,0.570,0.580,0.770,0.560
-Baseline,Linear Discriminant Analysis (LDA),None,None,0.830,0.660,0.620,0.640,0.820,0.610
-Baseline,XGBoost (Original),None,None,0.830,0.660,0.620,0.640,0.820,0.630
-Engineered,Cost-Weighted Logistic Regression,Flash Claims + Ratios + Geo,RobustScaler,0.820,0.650,0.780,0.710,0.840,0.680
-Engineered,Balanced Random Forest (Calibrated),Flash Claims + Ratios + Geo,RobustScaler,0.850,0.680,0.760,0.720,0.860,0.720
-Engineered,XGBoost / Gradient Boosting (Champion),Flash Claims + Ratios + Geo,RobustScaler,0.865,0.720,0.810,0.762,0.885,0.750
+model,mean_pr_auc,mean_roc_auc,mean_f1
+Cost-Weighted Logistic Regression,0.621,0.843,0.683
+Balanced Random Forest,0.607,0.842,0.635
+Gradient Boosting Classifier,0.65,0.854,0.661
+Scale-Weighted XGBoost,0.669,0.862,0.702

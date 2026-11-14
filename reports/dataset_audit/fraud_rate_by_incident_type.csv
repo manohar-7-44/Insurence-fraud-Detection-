@@ -1,0 +1,5 @@
+incident_type,claim_count,fraud_count,fraud_rate_percent
+Multi-vehicle Collision,419,114,27.21
+Single Vehicle Collision,403,117,29.03
+Vehicle Theft,94,8,8.51
+Parked Car,84,8,9.52

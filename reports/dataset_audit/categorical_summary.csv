@@ -1,0 +1,22 @@
+column,unique_non_missing,missing_count,most_frequent_value,most_frequent_count
+policy_bind_date,951,0,1992-04-28,3
+policy_state,3,0,OH,352
+policy_csl,3,0,250/500,351
+insured_sex,2,0,FEMALE,537
+insured_education_level,7,0,JD,161
+insured_occupation,14,0,machine-op-inspct,93
+insured_hobbies,20,0,reading,64
+insured_relationship,6,0,own-child,183
+incident_date,60,0,2015-02-02,28
+incident_type,4,0,Multi-vehicle Collision,419
+collision_type,3,178,Rear Collision,292
+incident_severity,4,0,Minor Damage,354
+authorities_contacted,4,91,Police,292
+incident_state,7,0,NY,262
+incident_city,7,0,Springfield,157
+incident_location,1000,0,1012 5th Lane,1
+property_damage,2,360,NO,338
+police_report_available,2,343,NO,343
+auto_make,14,0,Dodge,80
+auto_model,39,0,RAM,43
+fraud_reported,2,0,N,753

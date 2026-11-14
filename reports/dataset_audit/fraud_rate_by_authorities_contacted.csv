@@ -1,0 +1,5 @@
+authorities_contacted,claim_count,fraud_count,fraud_rate_percent
+Police,292,61,20.89
+Fire,223,60,26.91
+Other,198,63,31.82
+Ambulance,196,57,29.08

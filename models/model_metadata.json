@@ -1,41 +1,42 @@
 {
-  "project_name": "Insurance Claim Fraud Detection",
-  "version": "1.0.0-phase1",
-  "champion_model": "Engineered XGBoost / Gradient Boosting Classifier",
-  "dataset_summary": {
-    "total_records": 1000,
-    "train_records": 800,
-    "test_records": 200,
-    "fraud_rate_train": 0.2475,
-    "fraud_rate_test": 0.2450
+  "champion_model": "Scale-Weighted XGBoost",
+  "optimal_threshold": 0.05,
+  "test_metrics_default_threshold": {
+    "precision": 0.639344262295082,
+    "recall": 0.7959183673469388,
+    "f1": 0.7090909090909091,
+    "roc_auc": 0.8378159210704149,
+    "pr_auc": 0.5969952494552706,
+    "true_positives": 39,
+    "false_positives": 22,
+    "true_negatives": 129,
+    "false_negatives": 10
   },
-  "champion_metrics": {
-    "accuracy": 0.865,
-    "precision": 0.720,
-    "recall": 0.810,
-    "f1_score": 0.762,
-    "roc_auc": 0.885,
-    "pr_auc": 0.750,
-    "confusion_matrix": {
-      "true_negatives": 133,
-      "false_positives": 18,
-      "false_negatives": 9,
-      "true_positives": 40
+  "benchmark_summary": [
+    {
+      "model": "Cost-Weighted Logistic Regression",
+      "mean_pr_auc": 0.621,
+      "mean_roc_auc": 0.843,
+      "mean_f1": 0.683
+    },
+    {
+      "model": "Balanced Random Forest",
+      "mean_pr_auc": 0.607,
+      "mean_roc_auc": 0.842,
+      "mean_f1": 0.635
+    },
+    {
+      "model": "Gradient Boosting Classifier",
+      "mean_pr_auc": 0.65,
+      "mean_roc_auc": 0.854,
+      "mean_f1": 0.661
+    },
+    {
+      "model": "Scale-Weighted XGBoost",
+      "mean_pr_auc": 0.669,
+      "mean_roc_auc": 0.862,
+      "mean_f1": 0.702
     }
-  },
-  "cost_optimization": {
-    "cost_false_negative_payout": 50000.0,
-    "cost_false_positive_investigation": 500.0,
-    "default_threshold": 0.50,
-    "default_threshold_loss_usd": 459000.0,
-    "optimal_threshold": 0.38,
-    "optimal_threshold_loss_usd": 284500.0,
-    "cost_savings_usd": 174500.0
-  },
-  "serialization": {
-    "pipeline_file": "best_fraud_pipeline.joblib",
-    "feature_engineer": "InsuranceFeatureEngineer",
-    "preprocessor": "ColumnTransformer(RobustScaler, OneHotEncoder)",
-    "classifier": "XGBClassifier"
-  }
+  ],
+  "saved_pipeline_file": "best_fraud_pipeline.joblib"
 }

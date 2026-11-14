@@ -1,0 +1,85 @@
+{
+  "row_count": 1000,
+  "column_count": 40,
+  "duplicate_rows": 0,
+  "all_missing_columns": [
+    "_c39"
+  ],
+  "total_missing_cells": 1972,
+  "target_missing": 0,
+  "target_labels": [
+    "N",
+    "Y"
+  ],
+  "target_distribution": {
+    "N": {
+      "count": 753,
+      "percentage": 75.3
+    },
+    "Y": {
+      "count": 247,
+      "percentage": 24.7
+    }
+  },
+  "numeric_columns": [
+    "months_as_customer",
+    "age",
+    "policy_number",
+    "policy_deductable",
+    "policy_annual_premium",
+    "umbrella_limit",
+    "insured_zip",
+    "capital-gains",
+    "capital-loss",
+    "incident_hour_of_the_day",
+    "number_of_vehicles_involved",
+    "bodily_injuries",
+    "witnesses",
+    "total_claim_amount",
+    "injury_claim",
+    "property_claim",
+    "vehicle_claim",
+    "auto_year",
+    "_c39"
+  ],
+  "categorical_columns": [
+    "policy_bind_date",
+    "policy_state",
+    "policy_csl",
+    "insured_sex",
+    "insured_education_level",
+    "insured_occupation",
+    "insured_hobbies",
+    "insured_relationship",
+    "incident_date",
+    "incident_type",
+    "collision_type",
+    "incident_severity",
+    "authorities_contacted",
+    "incident_state",
+    "incident_city",
+    "incident_location",
+    "property_damage",
+    "police_report_available",
+    "auto_make",
+    "auto_model",
+    "fraud_reported"
+  ],
+  "identifier_candidates": [
+    {
+      "column": "policy_number",
+      "unique_values": 1000,
+      "unique_ratio": 1.0
+    },
+    {
+      "column": "insured_zip",
+      "unique_values": 995,
+      "unique_ratio": 0.995
+    },
+    {
+      "column": "incident_location",
+      "unique_values": 1000,
+      "unique_ratio": 1.0
+    }
+  ]
+}

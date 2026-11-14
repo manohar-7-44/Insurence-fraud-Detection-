@@ -1,0 +1,3 @@
+insured_sex,claim_count,fraud_count,fraud_rate_percent
+FEMALE,537,126,23.46
+MALE,463,121,26.13

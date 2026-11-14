@@ -1,0 +1,5 @@
+incident_severity,claim_count,fraud_count,fraud_rate_percent
+Minor Damage,354,38,10.73
+Total Loss,280,36,12.86
+Major Damage,276,167,60.51
+Trivial Damage,90,6,6.67
